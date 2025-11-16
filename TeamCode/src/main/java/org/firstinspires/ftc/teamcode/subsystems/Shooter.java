@@ -3,12 +3,14 @@ package org.firstinspires.ftc.teamcode.subsystems;
 import android.util.Log;
 
 import com.pedropathing.geometry.Pose;
+import com.qualcomm.robotcore.hardware.DcMotor;
 import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.InstantCommand;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.controller.PIDController;
+import com.seattlesolvers.solverslib.hardware.motors.Motor;
 import com.seattlesolvers.solverslib.hardware.motors.MotorEx;
 import com.seattlesolvers.solverslib.hardware.servos.ServoEx;
 import com.seattlesolvers.solverslib.util.InterpLUT;
@@ -18,7 +20,6 @@ import org.firstinspires.ftc.teamcode.robot.TurtleRobot;
 import java.util.function.Supplier;
 
 public class Shooter extends SubsystemBase {
-    public static double x = 0;
     private final MotorEx shootert, shooterb, turret;
     private final ServoEx hood;
     private VoltageSensor volt;
@@ -45,24 +46,25 @@ public class Shooter extends SubsystemBase {
         volt = hMap.get(VoltageSensor.class, "Control Hub");
         shooterb.setRunMode(MotorEx.RunMode.RawPower);
         shootert.setRunMode(MotorEx.RunMode.RawPower);
+        turret.encoder.reset();
         turret.setRunMode(MotorEx.RunMode.RawPower);
 
         controllerShooter = new PIDController(p, i, d);
         controllerTurret = new PIDController(pT, iT, dT);
 
         RPM.add(0, 315);
-        RPM.add(48.5, 315);
-        RPM.add(68.25, 330);
-        RPM.add(98, 380);
-        RPM.add(114.5, 410);
+        RPM.add(40.5, 315);
+        RPM.add(60.25, 330);
+        RPM.add(90, 380);
+        RPM.add(106.5, 410);
         RPM.add(210, 410);
         RPM.createLUT();
 
         angle.add(0, 1);
-        angle.add(48.5, 1);
-        angle.add(68.25, 0.3);
-        angle.add(98, 0.15);
-        angle.add(114.5, 0.05);
+        angle.add(40.5, 1);
+        angle.add(60.25, 0.3);
+        angle.add(90, 0.15);
+        angle.add(106.5, 0.05);
         angle.add(210, 0.05);
         angle.createLUT();
     }
@@ -83,9 +85,9 @@ public class Shooter extends SubsystemBase {
         double dx = shooterX - robotX;
         double dy = shooterY - robotY;
         double distance = Math.sqrt(dx*dx + dy*dy);
+        Log.d("Distance", String.valueOf(distance));
         double targetAngleRad = Math.atan2(dy, dx);
-        double targetAngleDeg = Math.toDegrees(targetAngleRad) - Math.toDegrees(robotHeading) - x;
-        Log.d("Target angle 2", String.valueOf(targetAngleDeg));
+        double targetAngleDeg = Math.toDegrees(targetAngleRad) - Math.toDegrees(robotHeading);
         targetAngleDeg = Math.max(targetAngleDeg, -100);
         targetAngleDeg = Math.min(targetAngleDeg, 240);
         double turretPos = ((double)turret.getCurrentPosition()) / TICKS_PER_DEGREES;

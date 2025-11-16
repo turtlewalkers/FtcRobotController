@@ -8,6 +8,7 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.RunCommand;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
 import com.seattlesolvers.solverslib.pedroCommand.FollowPathCommand;
@@ -42,11 +43,11 @@ public class TestPedro extends CommandOpMode {
 
         buildpaths();
 
-        SequentialCommandGroup auton = new SequentialCommandGroup(
+        schedule(
+                new RunCommand(() -> follower.update()),
                 new InstantCommand(),
                 new FollowPathCommand(follower, PreloadShoot, true)
         );
-        schedule(auton);
     }
 
 
@@ -54,10 +55,10 @@ public class TestPedro extends CommandOpMode {
     public void run() {
         super.run();
 
-        telemetryData.addData("Pedro pose tracker: ", follower.debug()[0]);
-        telemetryData.addData("Pedro error calculator", follower.debug()[1]);
-        telemetryData.addData("Pedro vector calculator", follower.debug()[2]);
-        telemetryData.addData("Pedro drivetrain", follower.debug()[3]);
+        telemetryData.addData("X", follower.getPose().getX());
+        telemetryData.addData("Y", follower.getPose().getY());
+        telemetryData.addData("Heading", follower.getPose().getHeading());
+        telemetryData.update();
     }
 
     @Override
