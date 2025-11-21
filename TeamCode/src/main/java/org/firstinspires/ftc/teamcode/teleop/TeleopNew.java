@@ -46,7 +46,8 @@ public class TeleopNew extends CommandOpMode {
             shooterY = 138;
         }
 
-        shooter = new Shooter(hardwareMap, () -> follower, shooterX, shooterY);
+        shooter = new Shooter(hardwareMap, () -> follower, shooterX, shooterY, !Memory.autoRan);
+        Memory.autoRan = false;
 
         new Trigger(() -> gamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5).whenActive(intake.collect());
         new Trigger(() -> gamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) < 0.5).whenActive(intake.stop());
