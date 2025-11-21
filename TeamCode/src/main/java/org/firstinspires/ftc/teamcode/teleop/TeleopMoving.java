@@ -49,7 +49,9 @@ public class TeleopMoving extends CommandOpMode {
             shooterY = 138;
         }
 
-        shooter = new ShooterMove(hardwareMap, () -> follower, shooterX, shooterY);
+        shooter = new ShooterMove(hardwareMap, () -> follower, shooterX, shooterY, !Memory.autoRan);
+        shooter.turretOff(false);
+        Memory.autoRan = false;
 
         new Trigger(() -> gamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) > 0.5).whenActive(intake.collect());
         new Trigger(() -> gamepad.getTrigger(GamepadKeys.Trigger.RIGHT_TRIGGER) < 0.5).whenActive(intake.stop());

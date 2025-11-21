@@ -9,6 +9,7 @@ import com.qualcomm.robotcore.hardware.HardwareMap;
 import com.qualcomm.robotcore.hardware.VoltageSensor;
 import com.seattlesolvers.solverslib.command.Command;
 import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
 import com.seattlesolvers.solverslib.command.SubsystemBase;
 import com.seattlesolvers.solverslib.controller.PIDController;
 import com.seattlesolvers.solverslib.hardware.motors.Motor;
@@ -30,7 +31,7 @@ public class Shooter extends SubsystemBase {
     InterpLUT RPM = new InterpLUT();
     InterpLUT angle = new InterpLUT();
     InterpLUT shottime = new InterpLUT();
-    private int turretOff = 1;
+    private int turretOff = 0;
     private double shooterX, shooterY;
     private PIDController controllerShooter, controllerTurret;
     public static double p = 0.6, i = 0.1, d = 0;
@@ -38,7 +39,7 @@ public class Shooter extends SubsystemBase {
     public static double f = 0.0265;
     public static double TICKS_PER_DEGREES = ((((1.0+(46.0/17.0))) * (1.0+(46.0/11.0))) * 28.0 * 3.0) / 360.0;
 
-    public Shooter(final HardwareMap hMap, Supplier<Follower> followerSupplier, double shooterX, double shooterY) {
+    public Shooter(final HardwareMap hMap, Supplier<Follower> followerSupplier, double shooterX, double shooterY, boolean turretReset) {
         this.shooterX = shooterX;
         this.shooterY = shooterY;
         this.followerSupplier = followerSupplier;
@@ -49,7 +50,9 @@ public class Shooter extends SubsystemBase {
         volt = hMap.get(VoltageSensor.class, "Control Hub");
         shooterb.setRunMode(MotorEx.RunMode.RawPower);
         shootert.setRunMode(MotorEx.RunMode.RawPower);
-        turret.encoder.reset();
+        if (turretReset) {
+            turret.stopAndResetEncoder();
+        }
         turret.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         turret.setRunMode(MotorEx.RunMode.RawPower);
 
@@ -107,10 +110,11 @@ public class Shooter extends SubsystemBase {
         double targetAngleDeg = Math.toDegrees(targetAngleRad) - Math.toDegrees(robotHeading);
         targetAngleDeg = Math.max(targetAngleDeg, -100);
         targetAngleDeg = Math.min(targetAngleDeg, 240);
+        targetAngleDeg *= turretOff;
         double turretPos = ((double)turret.getCurrentPosition()) / TICKS_PER_DEGREES;
         Log.d("turretPos", String.valueOf(turretPos));
         double turretPower = controllerTurret.calculate(turretPos, targetAngleDeg);
-        turret.set(turretPower / presentVoltage * turretOff);
+        turret.set(turretPower / presentVoltage);
         target = RPM.get(distance);
         hood.set(angle.get(distance));
         double vel = shooterb.getVelocity() * (2 * Math.PI / 28);

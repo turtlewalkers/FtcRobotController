@@ -30,6 +30,7 @@ public class ShooterMove extends SubsystemBase {
     InterpLUT RPM = new InterpLUT();
     InterpLUT angle = new InterpLUT();
     InterpLUT shottime = new InterpLUT();
+    private int turretOff = 0;
     private double shooterX, shooterY;
     private PIDController controllerShooter, controllerTurret;
     public static double p = 0.6, i = 0.1, d = 0;
@@ -37,7 +38,7 @@ public class ShooterMove extends SubsystemBase {
     public static double f = 0.0265;
     public static double TICKS_PER_DEGREES = ((((1.0+(46.0/17.0))) * (1.0+(46.0/11.0))) * 28.0 * 3.0) / 360.0;
 
-    public ShooterMove(final HardwareMap hMap, Supplier<Follower> followerSupplier, double shooterX, double shooterY) {
+    public ShooterMove(final HardwareMap hMap, Supplier<Follower> followerSupplier, double shooterX, double shooterY, boolean turretReset) {
         this.shooterX = shooterX;
         this.shooterY = shooterY;
         this.followerSupplier = followerSupplier;
@@ -48,7 +49,10 @@ public class ShooterMove extends SubsystemBase {
         volt = hMap.get(VoltageSensor.class, "Control Hub");
         shooterb.setRunMode(MotorEx.RunMode.RawPower);
         shootert.setRunMode(MotorEx.RunMode.RawPower);
-        turret.encoder.reset();
+        Log.d("Initial Turret Pose", String.valueOf((double)turret.getCurrentPosition() / TICKS_PER_DEGREES));
+        if (turretReset) {
+            turret.stopAndResetEncoder();
+        }
         turret.setZeroPowerBehavior(Motor.ZeroPowerBehavior.BRAKE);
         turret.setRunMode(MotorEx.RunMode.RawPower);
 
@@ -84,6 +88,9 @@ public class ShooterMove extends SubsystemBase {
 
     public Command flywheel (boolean on) {
         return new InstantCommand(() -> flywheelOn = on);
+    }
+    public Command turretOff (boolean off) {
+        return new InstantCommand(() -> turretOff = off ? 0 : 1);
     }
 
     @Override

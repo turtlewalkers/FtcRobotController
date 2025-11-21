@@ -9,6 +9,7 @@ import com.pedropathing.paths.PathChain;
 import com.qualcomm.robotcore.eventloop.opmode.Autonomous;
 import com.seattlesolvers.solverslib.command.CommandOpMode;
 import com.seattlesolvers.solverslib.command.InstantCommand;
+import com.seattlesolvers.solverslib.command.ParallelCommandGroup;
 import com.seattlesolvers.solverslib.command.RunCommand;
 import com.seattlesolvers.solverslib.command.SequentialCommandGroup;
 import com.seattlesolvers.solverslib.command.WaitCommand;
@@ -26,7 +27,6 @@ public class AutonBlue extends CommandOpMode {
     private Intake intake;
     private Shooter shooter;
     TelemetryData telemetryData = new TelemetryData(telemetry);
-
     // Poses:
     private final Pose Start = new Pose(28.5, 128, Math.toRadians(135));
 
@@ -150,81 +150,89 @@ public class AutonBlue extends CommandOpMode {
     @Override
     public void initialize() {
         super.reset();
-
+        Memory.allianceRed = false;
+        Memory.autoRan = true;
         follower = Constants.createFollower(hardwareMap);
         follower.setStartingPose(Start);
         intake = new Intake(hardwareMap);
-        shooter = new Shooter(hardwareMap, () -> follower, 0, 144);
+        shooter = new Shooter(hardwareMap, () -> follower, 6, 138, true);
 
         buildpaths();
 
         schedule(
                 new RunCommand(() -> follower.update()),
                 new SequentialCommandGroup(
-                        new FollowPathCommand(follower, Paneer),
-                        // === Preload ===
-                        intake.collect(),                        // robot.intake.setPower(1);
-                        shooter.flywheel(true),
-                        shooter.turretOff(false),
+                        new ParallelCommandGroup (
+//                                new FollowPathCommand(follower, Paneer),
+                                new FollowPathCommand(follower, PreloadShoot),
+                                // === Preload ===
+                                intake.collect(),                        // robot.intake.setPower(1);
+                                intake.close(),
+                                shooter.flywheel(true),
+                                shooter.turretOff(false)
 
-                        new FollowPathCommand(follower, PreloadShoot),
+                        ),
+
+
                         intake.open(),
                         new WaitCommand(1800),
-
-                        new FollowPathCommand(follower, Goto1, true),
+                        shooter.turretOff(true),
+                        new FollowPathCommand(follower, Goto1, false),
                         intake.close(),
 
 
-                        new FollowPathCommand(follower, Pickup1, true),
+                        new FollowPathCommand(follower, Pickup1, false),
 
                         new WaitCommand(100),
-
-                        intake.collect(),
+                        shooter.turretOff(false),
+//                        intake.collect(),
                         new FollowPathCommand(follower, Shoot1, true),
                         intake.open(),
                         new WaitCommand(1800),
-
-                        new FollowPathCommand(follower, GateOpen, true).withTimeout(2000),
+                        shooter.turretOff(true),
+                        new FollowPathCommand(follower, GateOpen, false).withTimeout(2000),
                         intake.close(),
 
 
                         new FollowPathCommand(follower, GateLeave, false),
 
-                        new FollowPathCommand(follower, Goto2, true),
+                        new FollowPathCommand(follower, Goto2, false),
 
                         new WaitCommand(100),
 
-                        new FollowPathCommand(follower, Pickup2, true),
+                        new FollowPathCommand(follower, Pickup2, false),
 
                         new WaitCommand(100),
+                        shooter.turretOff(false),
 
                         new FollowPathCommand(follower, Shoot2, true),
                         intake.open(),
                         new WaitCommand(1800),
-
-                        new FollowPathCommand(follower, Goto3, true),
+                        shooter.turretOff(true),
+                        new FollowPathCommand(follower, Goto3, false),
                         intake.close(),
 
-                        new FollowPathCommand(follower, Pickup3, true),
-
+                        new FollowPathCommand(follower, Pickup3, false),
+                        shooter.turretOff(false),
                         new FollowPathCommand(follower, Shoot3, true),
                         intake.open(),
                         new WaitCommand(1800),
+                        shooter.turretOff(true),
 
                         new FollowPathCommand(follower, Goto4Part1, false),
                         intake.close(),
 
                         new FollowPathCommand(follower, Goto4, false).withTimeout(1000),
                         new WaitCommand(300),
-
+                        shooter.turretOff(false),
                         new FollowPathCommand(follower, Shoot4, true),
                         intake.open(),
                         new WaitCommand(1800),
                         intake.close(),
 
                         shooter.turretOff(true),
-                        new FollowPathCommand(follower, tatawireless, true),
-//
+                        new FollowPathCommand(follower, tatawireless, false),
+                        new WaitCommand(1800),
                         new InstantCommand(() -> shooter.flywheel(false))
                 )
         );
@@ -252,5 +260,8 @@ public class AutonBlue extends CommandOpMode {
         Memory.robotAutoY = follower.getPose().getY();
         Memory.robotHeading = follower.getPose().getHeading();
         Memory.robotPose = follower.getPose();
+        Memory.autoRan = true;
+
+        schedule(new InstantCommand(() -> shooter.turretOff(true)));
     }
 }
